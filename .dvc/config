@@ -1,0 +1,4 @@
+[core]
+    remote = home-cloud
+['remote "home-cloud"']
+    url = s3://ghost-tail-data/
