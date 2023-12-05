@@ -1,8 +1,10 @@
 import os
+from dataclasses import dataclass
+from enum import Enum
 from typing import List, Union
 
 import mido
-from tqdm import tqdm
+from tqdm.contrib.concurrent import process_map
 
 RAW_MIDI_DIR = "../data/raw/jazz-piano-midi/"
 
@@ -45,7 +47,7 @@ def get_piano_tracks(mid: mido.MidiFile):
         return tracks[0]
 
     # has piano in name
-    if track := get_track_with_piano_in_name(tracks):
+    if track := get_track_with_piano_in_name(tracks) is not None:
         return track
 
     # only one track has piano in program
@@ -67,31 +69,47 @@ def get_piano_tracks(mid: mido.MidiFile):
     return None
 
 
+class Status(Enum):
+    VALID = 1
+    NO_PIANO = 2
+    CORRUPTED = 3
+
+
+@dataclass
+class Result:
+    filename: str
+    track: Union[mido.MidiTrack, None]
+    status: Status
+
+
+def process_midi_file(filename: str) -> Result:
+    full_path = os.path.join(RAW_MIDI_DIR, filename)
+    # load midi file using mido
+    try:
+        mid = mido.MidiFile(full_path)
+    except ValueError:
+        return Result(filename, None, Status.CORRUPTED)
+    # try to get piano track
+    track = get_piano_tracks(mid)
+    if track is not None:
+        return Result(filename, track, Status.VALID)
+    else:
+        return Result(filename, None, Status.NO_PIANO)
+
+
+# TODO: add args for data dir
 def main():
     # iterate through all midi files in directory
-    has_piano = 0
-    no_piano = 0
-    corrupted = 0
-    for filename in tqdm(os.listdir(RAW_MIDI_DIR)):
-        if filename.endswith(".mid") or filename.endswith(".MID"):
-            # print(f"Loading {filename}...")
-            full_path = os.path.join(RAW_MIDI_DIR, filename)
-            # load midi file using mido
-            try:
-                mid = mido.MidiFile(full_path)
-            except ValueError:
-                # print(f"Could not load {filename}.")
-                corrupted += 1
-                continue
-            # try to get piano track
-            track = get_piano_tracks(mid)
-            if track:
-                # print(f"{filename} has piano in {track.name}.")
-                has_piano += 1
-            else:
-                # print(f"{filename} has no piano track.")
-                no_piano += 1
-    print(f"{has_piano} files have piano, {no_piano} files don't, {corrupted} files are corrupted.")
+    files = [filename for filename in os.listdir(RAW_MIDI_DIR) if
+             filename.endswith(".mid") or filename.endswith(".MID")]
+    results = process_map(process_midi_file, files)
+    valid_tracks = [result for result in results if result.status == Status.VALID]
+    no_piano = [result for result in results if result.status == Status.NO_PIANO]
+    corrupted = [result for result in results if result.status == Status.CORRUPTED]
+
+    print(f"Found {len(valid_tracks)} piano tracks in {len(files)} files.")
+    print(f"Found {len(no_piano)} files without piano.")
+    print(f"Found {len(corrupted)} corrupted files.")
 
 
 if __name__ == '__main__':
