@@ -31,14 +31,14 @@ def get_track_with_piano_in_name(mid: List[mido.MidiTrack]) -> Union[mido.MidiTr
     if len(tracks) == 1:
         return tracks[0]
 
-    # Unfortunately there are tracks with multiple pianos. Not just 2 hands in different tracks.
+    # unfortunately there are tracks with multiple pianos. Not just 2 hands in different tracks.
     # if len(tracks) == 2:
     #     return mido.merge_tracks(tracks)
 
     return None
 
 
-def get_piano_tracks(mid: mido.MidiFile):
+def get_piano_track_from_mid(mid: mido.MidiFile):
     # get all tracks with note events
     tracks = [track for track in mid.tracks if track_has_note_events(track)]
 
@@ -83,7 +83,7 @@ class Result:
     status: Status
 
 
-def process_midi_file(filename: str) -> Result:
+def get_piano_track_from_file(filename: str) -> Result:
     full_path = os.path.join(RAW_MIDI_DIR, filename)
     # load midi file using mido
     try:
@@ -91,27 +91,31 @@ def process_midi_file(filename: str) -> Result:
     except ValueError:
         return Result(filename, None, Status.CORRUPTED)
     # try to get piano track
-    track = get_piano_tracks(mid)
+    track = get_piano_track_from_mid(mid)
     if track is not None:
         return Result(filename, track, Status.VALID)
     else:
         return Result(filename, None, Status.NO_PIANO)
 
 
-# TODO: add args for data dir
-def main():
+def get_piano_tracks_from_dir(midi_dir):
     # iterate through all midi files in directory
-    files = [filename for filename in os.listdir(RAW_MIDI_DIR) if
+    files = [filename for filename in os.listdir(midi_dir) if
              filename.endswith(".mid") or filename.endswith(".MID")]
-    results = process_map(process_midi_file, files)
+    results = process_map(get_piano_track_from_file, files)
     valid_tracks = [result for result in results if result.status == Status.VALID]
     no_piano = [result for result in results if result.status == Status.NO_PIANO]
     corrupted = [result for result in results if result.status == Status.CORRUPTED]
 
+    # implement logging (use loguru)
     print(f"Found {len(valid_tracks)} piano tracks in {len(files)} files.")
     print(f"Found {len(no_piano)} files without piano.")
     print(f"Found {len(corrupted)} corrupted files.")
 
+    return [result.track for result in valid_tracks]
 
+
+# TODO: maybe save all piano tracks as intermediate midi files in a directory
+# TODO: convert tracks to data format (not specified yet)
 if __name__ == '__main__':
-    main()
+    get_piano_tracks_from_dir(RAW_MIDI_DIR)
