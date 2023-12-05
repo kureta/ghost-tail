@@ -24,10 +24,7 @@ def get_first_program_change_from_track(track: mido.MidiTrack) -> Union[mido.Mes
 
 
 def get_track_with_piano_in_name(mid: List[mido.MidiTrack]) -> Union[mido.MidiTrack, None]:
-    tracks = []
-    for track in mid:
-        if "piano" in track.name.strip().lower():
-            tracks.append(track)
+    tracks = [track for track in mid if "piano" in track.name.strip().lower()]
 
     if len(tracks) == 1:
         return tracks[0]
