@@ -1,12 +1,11 @@
-import os
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import List, Union
 
 import mido
+from loguru import logger
 from tqdm.contrib.concurrent import process_map
-
-RAW_MIDI_DIR = "../data/raw/jazz-piano-midi/"
 
 
 def track_has_note_events(track: mido.MidiTrack) -> bool:
@@ -44,10 +43,12 @@ def get_piano_track_from_mid(mid: mido.MidiFile):
 
     # has only one track
     if len(tracks) == 1:
+        logger.info("Found only one track with note events. Assuming it is the piano track.")
         return tracks[0]
 
     # has piano in name
     if track := get_track_with_piano_in_name(tracks) is not None:
+        logger.info("Found unique track with piano in name.")
         return track
 
     # scan program change messages
@@ -61,10 +62,13 @@ def get_piano_track_from_mid(mid: mido.MidiFile):
 
     # only one track has piano in program
     if len(is_piano) == 1:
+        logger.info("Found unique track with piano in program.")
         return is_piano[0]
 
     # only one track has no program (default is piano)
     elif len(has_no_program) == 1:
+        logger.info("Found unique track with no program change. \
+        Assuming it is the piano track since default instrument is piano.")
         return has_no_program[0]
 
     return None
@@ -78,44 +82,67 @@ class Status(Enum):
 
 @dataclass
 class Result:
-    filename: str
+    filename: Path
     track: Union[mido.MidiTrack, None]
     status: Status
 
 
-def get_piano_track_from_file(filename: str) -> Result:
-    full_path = os.path.join(RAW_MIDI_DIR, filename)
+def get_piano_track_from_file(full_path: Path) -> Result:
+    filename = full_path.name
     # load midi file using mido
     try:
         mid = mido.MidiFile(full_path)
     except ValueError:
-        return Result(filename, None, Status.CORRUPTED)
+        logger.error(f"Could not load {filename}.")
+        return Result(full_path, None, Status.CORRUPTED)
     # try to get piano track
     track = get_piano_track_from_mid(mid)
     if track is not None:
-        return Result(filename, track, Status.VALID)
+        return Result(full_path, track, Status.VALID)
     else:
-        return Result(filename, None, Status.NO_PIANO)
+        logger.warning(f"Could not find piano track in {filename}.")
+        return Result(full_path, None, Status.NO_PIANO)
 
 
-def get_piano_tracks_from_dir(midi_dir):
+def get_piano_tracks_from_dir(midi_dir: Path) -> List[mido.MidiTrack]:
     # iterate through all midi files in directory
-    files = [filename for filename in os.listdir(midi_dir) if
-             filename.endswith(".mid") or filename.endswith(".MID")]
-    results = process_map(get_piano_track_from_file, files)
-    valid_tracks = [result for result in results if result.status == Status.VALID]
-    no_piano = [result for result in results if result.status == Status.NO_PIANO]
-    corrupted = [result for result in results if result.status == Status.CORRUPTED]
+    files = list(midi_dir.glob("*.mid")) + list(midi_dir.glob("*.MID"))
+    logger.info(f"Found {len(files)} midi files in {midi_dir}. Processing...")
 
-    # implement logging (use loguru)
-    print(f"Found {len(valid_tracks)} piano tracks in {len(files)} files.")
-    print(f"Found {len(no_piano)} files without piano.")
-    print(f"Found {len(corrupted)} corrupted files.")
+    # parallel process all files
+    results = process_map(get_piano_track_from_file, files)
+
+    # filter results
+    valid_tracks = [result for result in results if result.status == Status.VALID]
+    logger.info(f"Found {len(valid_tracks)} piano tracks in {len(files)} files.")
+
+    no_piano = [result for result in results if result.status == Status.NO_PIANO]
+    logger.info(f"Found {len(no_piano)} files without piano.")
+
+    corrupted = [result for result in results if result.status == Status.CORRUPTED]
+    logger.info(f"Found {len(corrupted)} corrupted files.")
 
     return [result.track for result in valid_tracks]
 
 
 # TODO: maybe save all piano tracks as intermediate midi files in a directory
 # TODO: convert tracks to data format (not specified yet)
+def main(args):
+    if len(args) > 1:
+        print("Usage: python main.py <path to midi directory>")
+        exit(1)
+    elif len(args) == 0:
+        print("No midi directory specified. Using default directory.")
+        my_path = Path(__file__).parent.parent
+        midi_dir = my_path / "data" / "raw" / "jazz-piano-midi"
+        get_piano_tracks_from_dir(midi_dir)
+    else:
+        midi_dir = Path(args[0])
+        print(f"Using {midi_dir} as midi directory.")
+        get_piano_tracks_from_dir(midi_dir)
+
+
 if __name__ == '__main__':
-    get_piano_tracks_from_dir(RAW_MIDI_DIR)
+    import sys
+
+    main(sys.argv[1:])
