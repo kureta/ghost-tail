@@ -2,3 +2,4 @@
     remote = home-cloud
 ['remote "home-cloud"']
     url = s3://ghost-tail-data/
+    endpointurl = https://cloud.kureta.xyz
