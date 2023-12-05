@@ -50,7 +50,7 @@ def get_piano_tracks(mid: mido.MidiFile):
     if track := get_track_with_piano_in_name(tracks) is not None:
         return track
 
-    # only one track has piano in program
+    # scan program change messages
     is_piano = []
     has_no_program = []
     for track in tracks:
@@ -62,6 +62,7 @@ def get_piano_tracks(mid: mido.MidiFile):
     # only one track has piano in program
     if len(is_piano) == 1:
         return is_piano[0]
+
     # only one track has no program (default is piano)
     elif len(has_no_program) == 1:
         return has_no_program[0]
