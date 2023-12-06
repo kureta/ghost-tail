@@ -22,3 +22,6 @@ build-backend = "poetry.core.masonry.api"
 [tool.pyright]
 venvPath = "/home/kureta/.cache/pypoetry/virtualenvs"
 venv = "ghost-tail-Yy6Qr63q-py3.11"
+
+[tool.black]
+line-length = 120

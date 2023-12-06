@@ -8,7 +8,6 @@ from loguru import logger
 from tqdm.contrib.concurrent import process_map
 
 
-
 def track_has_note_events(track: mido.MidiTrack) -> bool:
     return any(message.type == "note_on" for message in track)
 
@@ -38,7 +37,7 @@ def get_track_with_piano_in_name(mid: List[mido.MidiTrack]) -> Union[mido.MidiTr
     return None
 
 
-def get_piano_track_from_mid(mid: mido.MidiFile):
+def get_piano_track_from_mid(mid: mido.MidiFile) -> Union[mido.MidiTrack, None]:
     # get all tracks with note events
     tracks = [track for track in mid.tracks if track_has_note_events(track)]
 
@@ -48,7 +47,7 @@ def get_piano_track_from_mid(mid: mido.MidiFile):
         return tracks[0]
 
     # has piano in name
-    if track := get_track_with_piano_in_name(tracks) is not None:
+    if (track := get_track_with_piano_in_name(tracks)) is not None:
         logger.trace("Found unique track with piano in name.")
         return track
 
@@ -68,8 +67,10 @@ def get_piano_track_from_mid(mid: mido.MidiFile):
 
     # only one track has no program (default is piano)
     elif len(has_no_program) == 1:
-        logger.trace("Found unique track with no program change. \
-        Assuming it is the piano track since default instrument is piano.")
+        logger.trace(
+            "Found unique track with no program change. \
+            Assuming it is the piano track since default instrument is piano."
+        )
         return has_no_program[0]
 
     return None
@@ -128,6 +129,8 @@ def get_piano_tracks_from_dir(midi_dir: Path) -> List[mido.MidiTrack]:
 
 # TODO: maybe save all piano tracks as intermediate midi files in a directory
 # TODO: convert tracks to data format (not specified yet)
+# TODO: add pre-commit hooks
+# TODO: add nbstripout
 def main(args):
     if len(args) > 1:
         print("Usage: python main.py <path to midi directory>")
@@ -143,9 +146,10 @@ def main(args):
         get_piano_tracks_from_dir(midi_dir)
 
 
-if __name__ == '__main__':
-    import sys
+if __name__ == "__main__":
     import os
+    import sys
+
     from dotenv import load_dotenv
 
     load_dotenv()
