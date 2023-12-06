@@ -1,13 +1,11 @@
 from dataclasses import dataclass
 from enum import Enum
-from multiprocessing import Pool
 from pathlib import Path
 from typing import List, Union
 
 import mido
 from loguru import logger
-from tqdm import tqdm
-from tqdm.contrib.logging import logging_redirect_tqdm
+from tqdm.contrib.concurrent import process_map
 
 
 def track_has_note_events(track: mido.MidiTrack) -> bool:
@@ -114,10 +112,7 @@ def get_piano_tracks_from_dir(midi_dir: Path) -> List[mido.MidiTrack]:
     logger.info(f"Found {len(files)} midi files in {midi_dir}. Processing...")
 
     # parallel process all files
-    with Pool() as p:
-        with logging_redirect_tqdm():
-            with tqdm(p.imap_unordered(get_piano_track_from_file, files), total=len(files)) as pbar:
-                results = list(pbar)
+    results = process_map(get_piano_track_from_file, files)
 
     # filter results
     valid_tracks = [result for result in results if result.status == Status.VALID]
