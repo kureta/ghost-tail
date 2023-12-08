@@ -9,7 +9,7 @@ import mido
 from dotenv import load_dotenv
 from loguru import logger
 from rich.console import Console
-from rich.progress import track
+from rich.progress import Progress
 from systemd.journal import JournalHandler
 
 
@@ -31,19 +31,7 @@ def _log_formatter(record: dict) -> str:
     )
 
 
-load_dotenv()
-log_level = os.getenv("LOG_LEVEL", "INFO")
-
-console = Console()
-logger.remove()
-logger.add(
-    console.print,
-    level=log_level,
-    format=_log_formatter,
-    colorize=True,
-)
-# logger.add(RichHandler(), level=log_level, colorize=True)
-logger.add(JournalHandler(SYSLOG_IDENTIFIER="Ghost Tail"), level=log_level)
+console = Console(color_system="truecolor", stderr=True)
 
 
 def track_has_note_events(track: mido.MidiTrack) -> bool:
@@ -150,10 +138,11 @@ def get_piano_tracks_from_dir(midi_dir: Path) -> List[mido.MidiTrack]:
     logger.info(f"Found {len(files)} midi files in {midi_dir}. Processing...")
 
     # parallel process all files
-    # results = process_map(get_piano_track_from_file, files)
+    results = []
     with Pool() as p:
-        pbar = track(p.imap_unordered(get_piano_track_from_file, files), total=len(files))
-        results = list(pbar)
+        with Progress(console=console) as progress:
+            for f in progress.track(files):
+                results.append(get_piano_track_from_file(f))
 
     # filter results
     valid_tracks = [result for result in results if result.status == Status.VALID]
@@ -189,5 +178,17 @@ def main(args):
 
 if __name__ == "__main__":
     import sys
+
+    load_dotenv()
+    log_level = os.getenv("LOG_LEVEL", "INFO")
+
+    logger.remove()
+    logger.add(
+        console.print,
+        level="TRACE",
+        format=_log_formatter,
+        colorize=True,
+    )
+    logger.add(JournalHandler(SYSLOG_IDENTIFIER="Ghost Tail"), level=log_level)
 
     main(sys.argv[1:])
