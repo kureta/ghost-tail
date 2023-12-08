@@ -13,6 +13,7 @@ dvc = { extras = ["gdrive", "s3", "ssh"], version = "^3.31.2" }
 tqdm = "^4.66.1"
 loguru = "^0.7.2"
 python-dotenv = "^1.0.0"
+systemd-python = "^235"
 
 
 [build-system]

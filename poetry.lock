@@ -2689,6 +2689,16 @@ pyopenssl = ["asyncssh[pyopenssl]"]
 pywin32 = ["asyncssh[pywin32]"]
 
 [[package]]
+name = "systemd-python"
+version = "235"
+description = "Python interface for libsystemd"
+optional = false
+python-versions = "*"
+files = [
+    {file = "systemd-python-235.tar.gz", hash = "sha256:4e57f39797fd5d9e2d22b8806a252d7c0106c936039d1e71c8c6b8008e695c0a"},
+]
+
+[[package]]
 name = "tabulate"
 version = "0.9.0"
 description = "Pretty-print tabular data"
@@ -3053,4 +3063,4 @@ test = ["zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "0e369425a90ecbd67c9d3384f08b78f47b7fe27927b834186edea2c7982bce4d"
+content-hash = "fea3f681a5c922081af2729421cca4fa4f6c01abc6e7ede1e7a7b4375f859dd6"

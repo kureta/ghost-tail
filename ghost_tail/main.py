@@ -5,6 +5,7 @@ from typing import List, Union
 
 import mido
 from loguru import logger
+from systemd.journal import JournalHandler
 from tqdm.contrib.concurrent import process_map
 
 
@@ -156,6 +157,7 @@ if __name__ == "__main__":
     log_level = os.getenv("LOG_LEVEL", "INFO")
 
     logger.remove()
-    logger.add(sys.stderr, level=log_level)
+    logger.add(sys.stderr, level="WARNING")
+    logger.add(JournalHandler(SYSLOG_IDENTIFIER="Ghost Tail"), level=log_level)
 
     main(sys.argv[1:])
