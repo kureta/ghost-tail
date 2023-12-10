@@ -1,10 +1,13 @@
+from __future__ import annotations
+
 import os
+from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from enum import Enum
-from multiprocessing import Pool
 from pathlib import Path
 from typing import List, Union
 
+import loguru
 import mido
 from dotenv import load_dotenv
 from loguru import logger
@@ -13,7 +16,7 @@ from rich.progress import Progress
 from systemd.journal import JournalHandler
 
 
-def _log_formatter(record: dict) -> str:
+def _log_formatter(record: loguru.Record) -> str:
     """Log message formatter"""
     color_map = {
         "TRACE": "dim blue",
@@ -139,10 +142,16 @@ def get_piano_tracks_from_dir(midi_dir: Path) -> List[mido.MidiTrack]:
 
     # parallel process all files
     results = []
-    with Pool() as p:
-        with Progress(console=console) as progress:
-            for f in progress.track(files):
-                results.append(get_piano_track_from_file(f))
+    with Progress(console=console, auto_refresh=False) as progress:
+        task = progress.add_task("Processing...", total=len(files))
+        with ProcessPoolExecutor(max_workers=12) as executor:
+            for f in files:
+                results.append(executor.submit(get_piano_track_from_file, f))
+            while (n_done := sum(result.done() for result in results)) < len(files):
+                progress.update(task, completed=n_done)
+                progress.refresh()
+
+    results = [result.result() for result in results]
 
     # filter results
     valid_tracks = [result for result in results if result.status == Status.VALID]
@@ -185,7 +194,7 @@ if __name__ == "__main__":
     logger.remove()
     logger.add(
         console.print,
-        level="TRACE",
+        level=log_level,
         format=_log_formatter,
         colorize=True,
     )
