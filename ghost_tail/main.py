@@ -16,8 +16,8 @@ from rich.progress import Progress
 from systemd.journal import JournalHandler
 
 
-def _log_formatter(record: loguru.Record) -> str:
-    """Log message formatter"""
+def _get_color(record: loguru.Record) -> str:
+    """Get color for log message"""
     color_map = {
         "TRACE": "dim blue",
         "DEBUG": "cyan",
@@ -27,11 +27,21 @@ def _log_formatter(record: loguru.Record) -> str:
         "ERROR": "bold red",
         "CRITICAL": "bold white on red",
     }
-    lvl_color = color_map.get(record["level"].name, "cyan")
+    return color_map.get(record["level"].name, "cyan")
+
+
+def _log_formatter(record: loguru.Record) -> str:
+    """Log message formatter"""
+    lvl_color = _get_color(record)
     return (
         "[not bold green]{time:YYYY/MM/DD HH:mm:ss}[/not bold green] | {level.icon}"
         + f"  - [{lvl_color}]{{message}}[/{lvl_color}]"
     )
+
+
+def _journald_formatter(record: loguru.Record) -> str:
+    """Log message formatter for journald"""
+    return f"{record['level'].name}: {record['message']}"
 
 
 console = Console(color_system="truecolor", stderr=True)
@@ -198,6 +208,11 @@ if __name__ == "__main__":
         format=_log_formatter,
         colorize=True,
     )
-    logger.add(JournalHandler(SYSLOG_IDENTIFIER="Ghost Tail"), level=log_level)
+    logger.add(
+        JournalHandler(SYSLOG_IDENTIFIER="Ghost Tail"),
+        level=log_level,
+        format=_journald_formatter,
+        colorize=False,
+    )
 
     main(sys.argv[1:])
