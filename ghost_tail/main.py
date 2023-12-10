@@ -5,6 +5,7 @@ from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from time import sleep
 from typing import List, Union
 
 import loguru
@@ -151,15 +152,14 @@ def get_piano_tracks_from_dir(midi_dir: Path) -> List[mido.MidiTrack]:
     logger.info(f"Found {len(files)} midi files in {midi_dir}. Processing...")
 
     # parallel process all files
-    results = []
     with Progress(console=console, auto_refresh=False) as progress:
         task = progress.add_task("Processing...", total=len(files))
-        with ProcessPoolExecutor(max_workers=12) as executor:
-            for f in files:
-                results.append(executor.submit(get_piano_track_from_file, f))
+        with ProcessPoolExecutor() as executor:
+            results = [executor.submit(get_piano_track_from_file, f) for f in files]
             while (n_done := sum(result.done() for result in results)) < len(files):
                 progress.update(task, completed=n_done)
                 progress.refresh()
+                sleep(0.1)
 
     results = [result.result() for result in results]
 
