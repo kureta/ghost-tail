@@ -16,7 +16,7 @@ from rich.progress import Progress
 from systemd.journal import JournalHandler
 
 
-def _get_color(record: loguru.Record) -> str:
+def _get_record_color(record: loguru.Record) -> str:
     """Get color for log message"""
     color_map = {
         "TRACE": "dim blue",
@@ -32,10 +32,10 @@ def _get_color(record: loguru.Record) -> str:
 
 def _log_formatter(record: loguru.Record) -> str:
     """Log message formatter"""
-    lvl_color = _get_color(record)
+    color = _get_record_color(record)
     return (
-        "[not bold green]{time:YYYY/MM/DD HH:mm:ss}[/not bold green] | {level.icon}"
-        + f"  - [{lvl_color}]{{message}}[/{lvl_color}]"
+        f"[not bold green]{record['time']:YYYY/MM/DD HH:mm:ss}[/not bold green] | "
+        + f"{record['level'].icon} - [{color}]{{message}}[/{color}]"
     )
 
 
