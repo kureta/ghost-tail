@@ -124,7 +124,7 @@ class Status(Enum):
 @dataclass
 class Result:
     filename: Path
-    track: Union[mido.MidiTrack, None]
+    track: mido.MidiTrack
     status: Status
 
 
@@ -135,14 +135,14 @@ def get_piano_track_from_file(full_path: Path) -> Result:
         mid = mido.MidiFile(full_path)
     except ValueError:
         logger.trace(f"Could not load {filename}.")
-        return Result(full_path, None, Status.CORRUPTED)
+        return Result(full_path, mido.MidiTrack(), Status.CORRUPTED)
     # try to get piano track
     track = get_piano_track_from_mid(mid)
     if track is not None:
         return Result(full_path, track, Status.VALID)
     else:
         logger.trace(f"Could not find piano track in {filename}.")
-        return Result(full_path, None, Status.NO_PIANO)
+        return Result(full_path, mido.MidiTrack(), Status.NO_PIANO)
 
 
 def get_piano_tracks_from_dir(midi_dir: Path) -> List[mido.MidiTrack]:
