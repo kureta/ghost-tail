@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 from loguru import logger
 from rich.console import Console
 from rich.progress import Progress
-from systemd.journal import JournalHandler
+from cysystemd.journal import JournaldLogHandler
 
 
 def _get_record_color(record: loguru.Record) -> str:
@@ -35,8 +35,8 @@ def _log_formatter(record: loguru.Record) -> str:
     """Log message formatter"""
     color = _get_record_color(record)
     return (
-        f"[not bold green]{record['time']:YYYY/MM/DD HH:mm:ss}[/not bold green] | "
-        + f"{record['level'].icon} - [{color}]{{message}}[/{color}]"
+            f"[not bold green]{record['time']:YYYY/MM/DD HH:mm:ss}[/not bold green] | "
+            + f"{record['level'].icon} - [{color}]{{message}}[/{color}]"
     )
 
 
@@ -209,7 +209,7 @@ if __name__ == "__main__":
         colorize=True,
     )
     logger.add(
-        JournalHandler(SYSLOG_IDENTIFIER="Ghost Tail"),
+        JournaldLogHandler(identifier="Ghost Tail"),
         level=log_level,
         format=_journald_formatter,
         colorize=False,
