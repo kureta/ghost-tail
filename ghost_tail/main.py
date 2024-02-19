@@ -36,15 +36,13 @@ def _get_record_color(record: loguru.Record) -> str:
 def _log_formatter(record: loguru.Record) -> str:
     """Log message formatter"""
     color = _get_record_color(record)
-    return (
-        f"[not bold green]{record['time']:YYYY/MM/DD HH:mm:ss}[/not bold green] | "
-        + f"{record['level'].icon} - [{color}]{{message}}[/{color}]"
-    )
+    return f"[not bold green]{record['time']:YYYY/MM/DD HH:mm:ss}[/not bold green] | " \
+           f"{record['level'].icon} | {{module}}:{{function}}:{{line}}\t- [{color}]{{message}}[/{color}]"
 
 
 def _journald_formatter(record: loguru.Record) -> str:
     """Log message formatter for journald"""
-    return f"{record['level'].name}: {record['message']}"
+    return f"{record['level'].name}: {{module}}:{{function}}:{{line}}: {record['message']}"
 
 
 console = Console(color_system="truecolor", stderr=True)
@@ -62,9 +60,7 @@ def track_has_program_change(track: mido.MidiTrack) -> bool:
     return any(message.type == "program_change" for message in track)
 
 
-def get_first_program_change_from_track(
-    track: mido.MidiTrack,
-) -> Union[mido.Message, None]:
+def get_first_program_change_from_track(track: mido.MidiTrack) -> Union[mido.Message, None]:
     """Get the first program change message from a track. This is used to determine the instrument.
     Currently, we only look at the first program change message.
     """
@@ -76,9 +72,7 @@ def get_first_program_change_from_track(
 
 
 # TODO: handle multiple tracks with piano in name, they are probably 2 hands of the same piano.
-def get_track_with_piano_in_name(
-    mid: List[mido.MidiTrack],
-) -> Union[mido.MidiTrack, None]:
+def get_track_with_piano_in_name(mid: List[mido.MidiTrack]) -> Union[mido.MidiTrack, None]:
     """See if there is a track with piano in its name. If there is only one, return it."""
     tracks = [track for track in mid if "piano" in track.name.strip().lower()]
 
@@ -182,6 +176,8 @@ def get_piano_tracks_from_dir(midi_dir: Path) -> List[mido.MidiTrack]:
                 progress.update(task, completed=n_done)
                 progress.refresh()
                 sleep(0.1)
+            progress.update(task, completed=len(files))
+            progress.refresh()
 
     results = [result.result() for result in results]
 
