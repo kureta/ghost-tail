@@ -16,6 +16,10 @@ rich = "^13.7.0"
 cysystemd = "^1.6.0"
 
 
+[tool.poetry.group.dev.dependencies]
+isort = "^5.13.2"
+black = "^24.2.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

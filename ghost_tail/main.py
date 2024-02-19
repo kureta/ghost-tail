@@ -1,4 +1,5 @@
 """Loads midi files from a directory and extracts piano tracks from them."""
+
 from __future__ import annotations
 
 import os
@@ -11,11 +12,11 @@ from typing import List, Union
 
 import loguru
 import mido
+from cysystemd.journal import JournaldLogHandler
 from dotenv import load_dotenv
 from loguru import logger
 from rich.console import Console
 from rich.progress import Progress
-from cysystemd.journal import JournaldLogHandler
 
 
 def _get_record_color(record: loguru.Record) -> str:
@@ -98,9 +99,7 @@ def get_piano_track_from_mid(mid: mido.MidiFile) -> Union[mido.MidiTrack, None]:
 
     # has only one track
     if len(tracks) == 1:
-        logger.trace(
-            "Found only one track with note events. Assuming it is the piano track."
-        )
+        logger.trace("Found only one track with note events. Assuming it is the piano track.")
         return tracks[0]
 
     # has piano in name
@@ -232,6 +231,8 @@ if __name__ == "__main__":
         level=log_level,
         format=_log_formatter,
         colorize=True,
+        backtrace=True,
+        diagnose=True,
     )
 
     # Systemd journal logging does not support TRACE level
