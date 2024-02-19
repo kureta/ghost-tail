@@ -228,6 +228,7 @@ if __name__ == "__main__":
     logger.remove()
     logger.add(
         console.print,
+        enqueue=True,
         level=log_level,
         format=_log_formatter,
         colorize=True,
