@@ -93,12 +93,10 @@ def get_piano_track_from_mid(mid: mido.MidiFile) -> Union[mido.MidiTrack, None]:
 
     # has only one track
     if len(tracks) == 1:
-        logger.trace("Found only one track with note events. Assuming it is the piano track.")
         return tracks[0]
 
     # has piano in name
     if (track := get_track_with_piano_in_name(tracks)) is not None:
-        logger.trace("Found unique track with piano in name.")
         return track
 
     # scan program change messages
@@ -112,15 +110,10 @@ def get_piano_track_from_mid(mid: mido.MidiFile) -> Union[mido.MidiTrack, None]:
 
     # only one track has piano in program
     if len(is_piano) == 1:
-        logger.trace("Found unique track with piano in program.")
         return is_piano[0]
 
     # only one track has no program (default is piano)
     elif len(has_no_program) == 1:
-        logger.trace(
-            "Found unique track with no program change. \
-            Assuming it is the piano track since default instrument is piano."
-        )
         return has_no_program[0]
 
     return None
@@ -128,7 +121,6 @@ def get_piano_track_from_mid(mid: mido.MidiFile) -> Union[mido.MidiTrack, None]:
 
 class Status(Enum):
     """Status of midi file processing."""
-
     VALID = 1
     NO_PIANO = 2
     CORRUPTED = 3
@@ -137,7 +129,6 @@ class Status(Enum):
 @dataclass
 class Result:
     """Result of processing a midi file."""
-
     filename: Path
     track: mido.MidiTrack
     status: Status
@@ -150,14 +141,15 @@ def get_piano_track_from_file(full_path: Path) -> Result:
     try:
         mid = mido.MidiFile(full_path)
     except ValueError:
-        logger.trace(f"Could not load {filename}.")
+        logger.warning(f"Could not load {filename}.")
         return Result(full_path, mido.MidiTrack(), Status.CORRUPTED)
     # try to get piano track
     track = get_piano_track_from_mid(mid)
     if track is not None:
+        logger.info(f"Found piano track in {filename}.")
         return Result(full_path, track, Status.VALID)
     else:
-        logger.trace(f"Could not find piano track in {filename}.")
+        logger.warning(f"Could not find piano track in {filename}.")
         return Result(full_path, mido.MidiTrack(), Status.NO_PIANO)
 
 
@@ -219,7 +211,7 @@ if __name__ == "__main__":
     import sys
 
     load_dotenv()
-    log_level = os.getenv("LOG_LEVEL", "TRACE")
+    log_level = os.getenv("LOG_LEVEL", "INFO")
 
     logger.remove()
     logger.add(
