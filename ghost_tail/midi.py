@@ -1,5 +1,6 @@
 """Loads midi files from a directory and extracts piano tracks from them."""
 # TODO: not enough heuristics to find piano tracks.
+# TODO: retrieve tempo. Might be changing over time (alo time signature)
 
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
@@ -11,7 +12,10 @@ from typing import List, Union
 import mido
 from rich.progress import Progress
 
-from logutils import console, logger
+from logutils import get_console, get_logger
+
+logger = get_logger()
+console = get_console()
 
 
 def track_has_note_events(track: mido.MidiTrack) -> bool:
@@ -38,12 +42,12 @@ def get_first_program_change_from_track(track: mido.MidiTrack) -> Union[mido.Mes
 
 
 # TODO: handle multiple tracks with piano in name, they are probably 2 hands of the same piano.
-def get_track_with_piano_in_name(mid: List[mido.MidiTrack]) -> Union[mido.MidiTrack, None]:
+def get_track_with_piano_in_name(mid: List[mido.MidiTrack]) -> Union[int, None]:
     """See if there is a track with piano in its name. If there is only one, return it."""
     tracks = [track for track in mid if "piano" in track.name.strip().lower()]
 
     if len(tracks) == 1:
-        return tracks[0]
+        return 0
 
     # unfortunately there are tracks with multiple pianos. Not just 2 hands in different tracks.
     # if len(tracks) == 2:
@@ -52,27 +56,27 @@ def get_track_with_piano_in_name(mid: List[mido.MidiTrack]) -> Union[mido.MidiTr
     return None
 
 
-def get_piano_track_from_mid(mid: mido.MidiFile) -> Union[mido.MidiTrack, None]:
+def get_piano_track_from_mid(mid: mido.MidiFile) -> Union[int, None]:
     """Apply a series of heuristics to find the piano track in a midi file."""
     # get all tracks with note events
     tracks = [track for track in mid.tracks if track_has_note_events(track)]
 
     # has only one track
     if len(tracks) == 1:
-        return tracks[0]
+        return 0
 
     # has piano in name
-    if (track := get_track_with_piano_in_name(tracks)) is not None:
-        return track
+    if (track_idx := get_track_with_piano_in_name(tracks)) is not None:
+        return track_idx
 
     # scan program change messages
     is_piano = []
     has_no_program = []
-    for track in tracks:
+    for idx, track in enumerate(tracks):
         if not track_has_program_change(track):
-            has_no_program.append(track)
+            has_no_program.append(idx)
         elif get_first_program_change_from_track(track) == 0:
-            is_piano.append(track)
+            is_piano.append(idx)
 
     # only one track has piano in program
     if len(is_piano) == 1:
@@ -96,7 +100,8 @@ class Status(Enum):
 class Result:
     """Result of processing a midi file."""
     filename: Path
-    track: mido.MidiTrack
+    track_idx: Union[int, None]
+    midi: Union[mido.MidiFile, None]
     status: Status
 
 
@@ -108,18 +113,18 @@ def get_piano_track_from_file(full_path: Path) -> Result:
         mid = mido.MidiFile(full_path)
     except ValueError:
         logger.warning(f"Could not load {filename}.")
-        return Result(full_path, mido.MidiTrack(), Status.CORRUPTED)
+        return Result(full_path, None, None, Status.CORRUPTED)
     # try to get piano track
     track = get_piano_track_from_mid(mid)
     if track is not None:
         logger.info(f"Found piano track in {filename}.")
-        return Result(full_path, track, Status.VALID)
+        return Result(full_path, track, mid, Status.VALID)
     else:
         logger.warning(f"Could not find piano track in {filename}.")
-        return Result(full_path, mido.MidiTrack(), Status.NO_PIANO)
+        return Result(full_path, None, None, Status.NO_PIANO)
 
 
-def get_piano_tracks_from_dir(midi_dir: Path) -> List[mido.MidiTrack]:
+def get_piano_tracks_from_dir(midi_dir: Path) -> List[Result]:
     """Load all midi files from a directory and extract the piano tracks from them."""
     # iterate through all midi files in directory
     files = list(midi_dir.glob("*.mid")) + list(midi_dir.glob("*.MID"))
@@ -149,4 +154,4 @@ def get_piano_tracks_from_dir(midi_dir: Path) -> List[mido.MidiTrack]:
     corrupted = [result for result in results if result.status == Status.CORRUPTED]
     logger.info(f"Found {len(corrupted)} corrupted files.")
 
-    return [result.track for result in valid_tracks]
+    return valid_tracks

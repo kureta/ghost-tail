@@ -34,26 +34,37 @@ def _journald_formatter(record: loguru.Record) -> str:
     return f"{record['level'].name}: {{module}}:{{function}}:{{line}}: {record['message']}"
 
 
-console = Console(color_system="truecolor", stderr=True)
+def get_console() -> Console:
+    """Get rich console"""
+    if not hasattr(get_console, "console"):
+        get_console.console = Console(color_system="truecolor", stderr=True)
+    return get_console.console
 
-load_dotenv()
-log_level = os.getenv("LOG_LEVEL", "INFO")
 
-logger.remove()
-logger.add(
-    console.print,
-    enqueue=True,
-    level=log_level,
-    format=_log_formatter,
-    colorize=True,
-    backtrace=True,
-    diagnose=True,
-)
+def get_logger() -> loguru.Logger:
+    if not hasattr(get_logger, "logger"):
+        load_dotenv()
+        log_level = os.getenv("LOG_LEVEL", "INFO")
 
-# Systemd journal logging does not support TRACE level
-# Default to INFO
-logger.add(
-    JournaldLogHandler(identifier="Ghost Tail"),
-    level="INFO",
-    format=_journald_formatter,
-)
+        logger.remove()
+        logger.add(
+            get_console().print,
+            enqueue=True,
+            level=log_level,
+            format=_log_formatter,
+            colorize=True,
+            backtrace=True,
+            diagnose=True,
+        )
+
+        # Systemd journal logging does not support TRACE level
+        # Default to INFO
+        logger.add(
+            JournaldLogHandler(identifier="Ghost Tail"),
+            level="INFO",
+            format=_journald_formatter,
+        )
+
+        get_logger.logger = logger
+
+    return get_logger.logger
