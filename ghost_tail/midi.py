@@ -1,6 +1,7 @@
 """Loads midi files from a directory and extracts piano tracks from them."""
+
 # TODO: not enough heuristics to find piano tracks.
-# TODO: retrieve tempo. Might be changing over time (alo time signature)
+# TODO: retrieve tempo. Might be changing over time (also time signature)
 
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
@@ -10,29 +11,34 @@ from time import sleep
 from typing import List, Union
 
 import mido
-from rich.progress import Progress
-
 from logutils import get_console, get_logger
+from rich.progress import Progress
 
 logger = get_logger()
 console = get_console()
 
 
 def track_has_note_events(track: mido.MidiTrack) -> bool:
-    """Some tracks have no note events. We need to filter them out."""
+    """Some tracks have no note events.
+
+    We need to filter them out.
+    """
     return any(message.type == "note_on" for message in track)
 
 
 def track_has_program_change(track: mido.MidiTrack) -> bool:
     """Program change messages are used to change the instrument.
+
     If a track has no program change, it is assumed to be a piano track.
     """
     return any(message.type == "program_change" for message in track)
 
 
 def get_first_program_change_from_track(track: mido.MidiTrack) -> Union[mido.Message, None]:
-    """Get the first program change message from a track. This is used to determine the instrument.
-    Currently, we only look at the first program change message.
+    """Get the first program change message from a track.
+
+    This is used to determine the instrument. Currently, we only look at the first program change
+    message.
     """
     for message in track:
         if message.type == "program_change":
@@ -43,7 +49,10 @@ def get_first_program_change_from_track(track: mido.MidiTrack) -> Union[mido.Mes
 
 # TODO: handle multiple tracks with piano in name, they are probably 2 hands of the same piano.
 def get_track_with_piano_in_name(mid: List[mido.MidiTrack]) -> Union[int, None]:
-    """See if there is a track with piano in its name. If there is only one, return it."""
+    """See if there is a track with piano in its name.
+
+    If there is only one, return it.
+    """
     tracks = [track for track in mid if "piano" in track.name.strip().lower()]
 
     if len(tracks) == 1:
@@ -91,6 +100,7 @@ def get_piano_track_from_mid(mid: mido.MidiFile) -> Union[int, None]:
 
 class Status(Enum):
     """Status of midi file processing."""
+
     VALID = 1
     NO_PIANO = 2
     CORRUPTED = 3
@@ -99,6 +109,7 @@ class Status(Enum):
 @dataclass
 class Result:
     """Result of processing a midi file."""
+
     filename: Path
     track_idx: Union[int, None]
     midi: Union[mido.MidiFile, None]

@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from rich.console import Console
+import os
+
+import loguru
 from cysystemd.journal import JournaldLogHandler
 from dotenv import load_dotenv
-import loguru
 from loguru import logger
-import os
+from rich.console import Console
 
 
 def _get_record_color(record: loguru.Record) -> str:
-    """Get color for log message"""
+    """Get color for log message."""
     color_map = {
         "TRACE": "dim blue",
         "DEBUG": "cyan",
@@ -23,19 +24,21 @@ def _get_record_color(record: loguru.Record) -> str:
 
 
 def _log_formatter(record: loguru.Record) -> str:
-    """Log message formatter"""
+    """Log message formatter."""
     color = _get_record_color(record)
-    return f"[not bold green]{record['time']:YYYY/MM/DD HH:mm:ss}[/not bold green] | " \
-           f"{record['level'].icon} | {{module}}:{{function}}:{{line}}\t- [{color}]{{message}}[/{color}]"
+    return (
+        f"[not bold green]{record['time']:YYYY/MM/DD HH:mm:ss}[/not bold green] | "
+        f"{record['level'].icon} | {{module}}:{{function}}:{{line}}\t- [{color}]{{message}}[/{color}]"
+    )
 
 
 def _journald_formatter(record: loguru.Record) -> str:
-    """Log message formatter for journald"""
+    """Log message formatter for journald."""
     return f"{record['level'].name}: {{module}}:{{function}}:{{line}}: {record['message']}"
 
 
 def get_console() -> Console:
-    """Get rich console"""
+    """Get rich console."""
     if not hasattr(get_console, "console"):
         get_console.console = Console(color_system="truecolor", stderr=True)
     return get_console.console

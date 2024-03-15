@@ -2,10 +2,9 @@
 
 from pathlib import Path
 
-from midi import get_piano_tracks_from_dir
 import typer
-
 from logutils import get_console  # , get_logger
+from midi import get_piano_tracks_from_dir
 
 DEFAULT_PATH = Path(__file__).parent.parent / "data" / "raw" / "jazz-piano-midi"
 
@@ -15,15 +14,18 @@ DEFAULT_PATH = Path(__file__).parent.parent / "data" / "raw" / "jazz-piano-midi"
 # TODO: add pre-commit hooks
 # TODO: add nbstripout
 # TODO: make into a proper CLI
-def main(directory: str = DEFAULT_PATH) -> None:
-    """Main function. Entry point of the program."""
+def main(directory: Path = DEFAULT_PATH) -> None:
+    """Main function.
+
+    Entry point of the program.
+    """
     console = get_console()
     # logger = get_logger()
 
     directory = Path(directory)
     console.print(f"Using {directory} as midi directory.")
     piano_tracks = get_piano_tracks_from_dir(directory)
-    console.print(f'Found {len(piano_tracks)} piano tracks.')
+    console.print(f"Found {len(piano_tracks)} piano tracks.")
 
 
 if __name__ == "__main__":
