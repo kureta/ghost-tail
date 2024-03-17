@@ -32,13 +32,13 @@ def _log_formatter(record: loguru.Record) -> str:
 
 
 class SingletonConsole(Console):
-    """Singleton console class"""
+    """Singleton console class."""
 
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super(SingletonConsole, cls).__new__(cls)
+            cls._instance = super().__new__(cls)
         return cls._instance
 
     def __init__(self):
