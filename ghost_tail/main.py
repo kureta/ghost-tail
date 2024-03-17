@@ -3,7 +3,7 @@
 from pathlib import Path
 
 import typer
-from logutils import get_console  # , get_logger
+from logutils import SingletonConsole  # , get_logger
 from midi import get_piano_tracks_from_dir
 
 DEFAULT_PATH = Path(__file__).parent.parent / "data" / "raw" / "jazz-piano-midi"
@@ -19,7 +19,7 @@ def main(directory: Path = DEFAULT_PATH) -> None:
 
     Entry point of the program.
     """
-    console = get_console()
+    console = SingletonConsole()
     # logger = get_logger()
 
     directory = Path(directory)

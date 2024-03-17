@@ -11,11 +11,11 @@ from time import sleep
 from typing import List, Union
 
 import mido
-from logutils import get_console, get_logger
+from logutils import SingletonConsole, get_logger
 from rich.progress import Progress
 
 logger = get_logger()
-console = get_console()
+console = SingletonConsole()
 
 
 def track_has_note_events(track: mido.MidiTrack) -> bool:
