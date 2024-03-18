@@ -11,8 +11,9 @@ from time import sleep
 from typing import List, Union
 
 import mido
-from logutils import SingletonConsole, get_logger
 from rich.progress import Progress
+
+from .logutils import SingletonConsole, get_logger
 
 logger = get_logger()
 console = SingletonConsole()

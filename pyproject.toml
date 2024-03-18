@@ -16,11 +16,13 @@ rich = "^13.7.0"
 cysystemd = "^1.6.0"
 typer = "^0.9.0"
 
-
 [tool.poetry.group.dev.dependencies]
 isort = "^5.13.2"
 black = "^24.2.0"
 pre-commit = "^3.6.2"
+
+[tool.poetry.scripts]
+preprocess = "ghost_tail.cli:preprocess"
 
 [build-system]
 requires = ["poetry-core"]

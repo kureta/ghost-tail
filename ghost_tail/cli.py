@@ -3,10 +3,13 @@
 from pathlib import Path
 
 import typer
-from logutils import SingletonConsole  # , get_logger
-from midi import get_piano_tracks_from_dir
+
+from .logutils import SingletonConsole  # , get_logger
+from .midi import get_piano_tracks_from_dir
 
 DEFAULT_PATH = Path(__file__).parent.parent / "data" / "raw" / "jazz-piano-midi"
+
+app = typer.Typer()
 
 
 # TODO: maybe save all piano tracks as intermediate midi files in a directory
@@ -14,7 +17,8 @@ DEFAULT_PATH = Path(__file__).parent.parent / "data" / "raw" / "jazz-piano-midi"
 # TODO: add pre-commit hooks
 # TODO: add nbstripout
 # TODO: make into a proper CLI
-def main(directory: Path = DEFAULT_PATH) -> None:
+@app.command()
+def preprocess(directory: Path = DEFAULT_PATH) -> None:
     """Main function.
 
     Entry point of the program.
@@ -29,4 +33,4 @@ def main(directory: Path = DEFAULT_PATH) -> None:
 
 
 if __name__ == "__main__":
-    typer.run(main)
+    app()
