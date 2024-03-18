@@ -1,4 +1,4 @@
-.PHONY: run view-logs init
+.PHONY: init
 
 init:
 	poetry install --with dev
