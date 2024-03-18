@@ -1,0 +1,6 @@
+outs:
+- md5: 10ab76d7fbde29f3a4a625bca8033473.dir
+  size: 37464793
+  nfiles: 277
+  hash: md5
+  path: jazz-piano-midi

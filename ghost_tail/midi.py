@@ -113,7 +113,7 @@ class Result:
 
     filename: Path
     track_idx: Union[int, None]
-    midi: Union[mido.MidiFile, None]
+    midi_data: Union[mido.MidiFile, None]
     status: Status
 
 
@@ -130,6 +130,15 @@ def get_piano_track_from_file(full_path: Path) -> Result:
     track = get_piano_track_from_mid(mid)
     if track is not None:
         logger.info(f"Found piano track in {filename}.")
+        for idx, track in enumerate(mid.tracks):
+            if idx != track:
+                for jdx, message in enumerate(track):
+                    if message.type in ["note_on", "note_off"] or (
+                        message.type == "control_change" and message.control == 64
+                    ):
+                        del track[jdx]
+        final_track = mido.merge_tracks(mid.tracks)
+        mid.tracks = [final_track]
         return Result(full_path, track, mid, Status.VALID)
     else:
         logger.warning(f"Could not find piano track in {filename}.")

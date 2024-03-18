@@ -61,6 +61,6 @@ def get_logger() -> loguru.Logger:
             diagnose=True,
         )
 
-        get_logger.logger = logger
+        get_logger.logger = logger  # type: ignore
 
-    return get_logger.logger
+    return get_logger.logger  # type: ignore
