@@ -19,7 +19,7 @@ repos:
 
   # python code formatting
   - repo: https://github.com/psf/black
-    rev: 24.2.0
+    rev: 24.3.0
     hooks:
       - id: black
         args: [--line-length, "120"]
@@ -76,7 +76,7 @@ repos:
 
   # shell scripts linter
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.6
+    rev: v0.10.0.1
     hooks:
       - id: shellcheck
 
@@ -129,3 +129,11 @@ repos:
     rev: 1.8.0
     hooks:
       - id: poetry-check
+
+  # Jupyter notebook checks
+  - repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.8.4
+    hooks:
+      - id: nbqa-black
+      - id: nbqa-ruff
+      - id: nbqa-isort
