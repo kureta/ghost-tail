@@ -17,6 +17,7 @@ cysystemd = "^1.6.0"
 typer = "^0.9.0"
 jupyterlab = "^4.1.5"
 nbstripout = "^0.7.1"
+matplotlib = "^3.8.3"
 
 [tool.poetry.group.dev.dependencies]
 isort = "^5.13.2"
