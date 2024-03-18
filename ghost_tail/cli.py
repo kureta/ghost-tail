@@ -14,9 +14,6 @@ app = typer.Typer()
 
 # TODO: maybe save all piano tracks as intermediate midi files in a directory
 # TODO: convert tracks to data format (not specified yet)
-# TODO: add pre-commit hooks
-# TODO: add nbstripout
-# TODO: make into a proper CLI
 @app.command()
 def preprocess(directory: Path = DEFAULT_PATH) -> None:
     """Main function.
